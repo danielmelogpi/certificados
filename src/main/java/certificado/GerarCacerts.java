@@ -124,6 +124,8 @@ public class GerarCacerts {
 			get("www.svc.fazenda.gov.br", 443, ks);
 			//AN - https://www.nfe.fazenda.gov.br
 			get("www.nfe.fazenda.gov.br", 443, ks);
+			
+
 
 			System.out.println(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
 			File cafile = new File(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
