@@ -1,10 +1,31 @@
 package certificado;
-import javax.net.ssl.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.HashMap;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
 
 public class GerarCacerts {
 
@@ -17,6 +38,7 @@ public class GerarCacerts {
 	private static final String CACERTS_PATH =  "src/main/resources/certificados/keystore";
 	private static final char SEPARATOR = File.separatorChar;
 	private static final int TIMEOUT_WS = 30;
+	private static HashMap<String, Boolean> servidoresConectados = new HashMap<>();
 
 
 	public static void main(String[] args) {	
@@ -43,89 +65,26 @@ public class GerarCacerts {
 			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 			ks.load(in, passphrase);
 			in.close();
-
-			//HOMOLOGACAO
-			//AM - https://homnfe.sefaz.am.gov.br
-			get("homnfe.sefaz.am.gov.br", 443, ks);
-			//BA - https://hnfe.sefaz.ba.gov.br
-			get("hnfe.sefaz.ba.gov.br", 443, ks);
-			//CE - https://nfeh.sefaz.ce.gov.br
-			get("nfeh.sefaz.ce.gov.br", 443, ks);
-			//ES - https://app.sefaz.es.gov.br
-			get("app.sefaz.es.gov.br", 443, ks);
-			//GO - https://homolog.sefaz.go.gov.br
-			get("homolog.sefaz.go.gov.br", 443, ks);
-			//MG - https://hnfe.fazenda.mg.gov.br
-			get("hnfe.fazenda.mg.gov.br", 443, ks);
-			//MS - https://homologacao.nfe.ms.gov.br
-			get("homologacao.nfe.ms.gov.br", 443, ks);
-			//MT - https://homologacao.sefaz.mt.gov.br
-			get("homologacao.sefaz.mt.gov.br", 443, ks);
-			//PE - https://nfehomolog.sefaz.pe.gov.br
-			get("nfehomolog.sefaz.pe.gov.br", 443, ks);
-			//PR - https://homologacao.nfe2.fazenda.pr.gov.br
-			get("homologacao.nfe2.fazenda.pr.gov.br", 443, ks);
-			//RS - https://homologacao.nfe.sefaz.rs.gov.br
-			get("homologacao.nfe.sefaz.rs.gov.br", 443, ks);
-			//RS2 - https://sef.sefaz.rs.gov.br
-			get("sef.sefaz.rs.gov.br", 443, ks);
-			//SP - https://homologacao.nfe.fazenda.sp.gov.br
-			get("homologacao.nfe.fazenda.sp.gov.br", 443, ks);
-			//SVAN - https://hom.sefazvirtual.fazenda.gov.br
-			get("hom.sefazvirtual.fazenda.gov.br", 443, ks);
-			//SVRS - https://homologacao.nfe.sefazvirtual.rs.gov.br
-			get("homologacao.nfe.sefazvirtual.rs.gov.br", 443, ks);
-			//SVRS NfeConsultaCadastro - https://webservice.set.rn.gov.br
-			get("webservice.set.rn.gov.br", 443, ks);
-			//SCAN - https://hom.nfe.fazenda.gov.br
-			get("hom.nfe.fazenda.gov.br", 443, ks);
-			//SVC-AN - https://hom.svc.fazenda.gov.br
-			get("hom.svc.fazenda.gov.br", 443, ks);
-			//AN - https://hom.nfe.fazenda.gov.br
-			get("hom.nfe.fazenda.gov.br", 443, ks);
-
-
-			//PRODUCAO
-			//AM - https://nfe.sefaz.am.gov.br
-			get("nfe.sefaz.am.gov.br", 443, ks);
-			//BA - https://nfe.sefaz.ba.gov.br
-			get("nfe.sefaz.ba.gov.br", 443, ks);
-			//CE - https://nfe.sefaz.ce.gov.br
-			get("nfe.sefaz.ce.gov.br", 443, ks);
-			//ES - https://app.sefaz.es.gov.br
-			get("app.sefaz.es.gov.br", 443, ks);
-			//GO - https://nfe.sefaz.go.gov.br
-			get("nfe.sefaz.go.gov.br", 443, ks);
-			//MG - https://nfe.fazenda.mg.gov.br
-			get("nfe.fazenda.mg.gov.br", 443, ks);
-			//MS - https://nfe.fazenda.ms.gov.br
-			get("nfe.fazenda.ms.gov.br", 443, ks);
-			//MT - https://nfe.sefaz.mt.gov.br
-			get("nfe.sefaz.mt.gov.br", 443, ks);
-			//PE - https://nfe.sefaz.pe.gov.br
-			get("nfe.sefaz.pe.gov.br", 443, ks);
-			//PR - https://nfe2.fazenda.pr.gov.br
-			get("nfe2.fazenda.pr.gov.br", 443, ks);
-			//RS - https://nfe.sefaz.rs.gov.br
-			get("nfe.sefaz.rs.gov.br", 443, ks);
-			//RS NfeConsultaCadastro - https://sef.sefaz.rs.gov.br
-			get("sef.sefaz.rs.gov.br", 443, ks);
-			//SP - https://nfe.fazenda.sp.gov.br
-			get("nfe.fazenda.sp.gov.br", 443, ks);
-			//SVAN	- https://www.sefazvirtual.fazenda.gov.br
-			get("www.sefazvirtual.fazenda.gov.br", 443, ks);
-			//SVRS - https://nfe.sefazvirtual.rs.gov.br
-			get("nfe.sefazvirtual.rs.gov.br", 443, ks);
-			//SVRS - https://svp-ws.sefazvirtual.rs.gov.br
-			get("svp-ws.sefazvirtual.rs.gov.br", 443, ks);
-			//SCAN	- https://www.scan.fazenda.gov.br
-			get("www.scan.fazenda.gov.br", 443, ks);
-			//SVC-AN - https://www.svc.fazenda.gov.br
-			get("www.svc.fazenda.gov.br", 443, ks);
-			//AN - https://www.nfe.fazenda.gov.br
-			get("www.nfe.fazenda.gov.br", 443, ks);
 			
-
+			File listaServidores = new File("src/main/resources/hosts/lista");
+			LineIterator it = FileUtils.lineIterator(listaServidores, "UTF-8");
+			try {
+			    while (it.hasNext()) {
+			    	String servidor = it.nextLine();
+			    	if (servidoresConectados.get(servidor)==null) {
+			    		get(servidor, 443, ks);
+			    	}
+			    }
+			} finally {
+			    it.close();
+			}
+			
+			try {
+				adicionarACBaixadas(ks);
+			} catch (Exception e) {
+				error(e.getLocalizedMessage());
+			}
+			
 
 			System.out.println(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
 			File cafile = new File(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
@@ -148,8 +107,18 @@ public class GerarCacerts {
 		SSLSocketFactory factory = context.getSocketFactory();
 
 		info("| Opening connection to " + host + ":" + port + "...");
-		SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
-		socket.setSoTimeout(TIMEOUT_WS * 1000);
+		
+		SSLSocket socket = null;
+		try{
+			socket = (SSLSocket) factory.createSocket(host, port);
+			socket.setSoTimeout(TIMEOUT_WS * 1000);
+		}
+		catch(Exception e) {
+			error("Erro ao acessar "+ host);
+			return;
+		}
+		
+		
 		try {
 			info("| Starting SSL handshake...");
 			socket.startHandshake();
@@ -184,6 +153,25 @@ public class GerarCacerts {
 				info("| Added certificate to keystore '" + CACERTS_PATH + SEPARATOR + CACERTS_NAME + "' using alias '" + alias + "'");
 			}
 		}
+	}
+	
+	private static void adicionarACBaixadas(KeyStore ks) throws CertificateException, FileNotFoundException, KeyStoreException {
+		File dir = new File("src/main/resources/certificado/autoridades");
+		info ("adicionando autoridades baixadas");
+		File[] directoryListing = dir.listFiles();
+		  if (directoryListing != null) {
+		    for (File child : directoryListing) {
+		    	Collection  col_crt1 =CertificateFactory.getInstance("X509").generateCertificates(new FileInputStream(child));
+		    	Certificate crt1 = (Certificate) col_crt1.iterator().next();
+		    	Certificate[] chain = new Certificate[] { crt1 };
+		    	String alias1 = ((X509Certificate) crt1).getSubjectX500Principal().getName();
+		    	info("Adicionando alias " + alias1);
+		    	ks.setCertificateEntry(alias1, crt1);
+		    }
+		  } else {
+		    error("erro ao iniciar instalacao de autoridades baixadas");
+		  }
+		
 	}
 
 	private static class SavingTrustManager implements X509TrustManager {
