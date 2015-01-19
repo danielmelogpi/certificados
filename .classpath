@@ -5,28 +5,8 @@
 	<classpathentry kind="src" path="src/main/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="lib/docfiscal-framework-1.0.78-SNAPSHOT.jar" sourcepath="/docfiscal-framework"/>
-	<classpathentry kind="lib" path="C:/Users/daniel.melo/.m2/repository/org/springframework/ws/spring-xml/2.1.4.RELEASE/spring-xml-2.1.4.RELEASE.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="jar:file:/C:/Users/daniel.melo/.m2/repository/org/springframework/ws/spring-xml/2.1.4.RELEASE/spring-xml-2.1.4.RELEASE-javadoc.jar!/"/>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="maven.groupId" value="org.springframework.ws"/>
-			<attribute name="maven.artifactId" value="spring-xml"/>
-			<attribute name="maven.version" value="2.1.4.RELEASE"/>
-			<attribute name="maven.scope" value="compile"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="lib/spring-ws-core-2.1.4.RELEASE.jar"/>
-	<classpathentry kind="lib" path="lib/docfiscal-basic.jar" sourcepath="/docfiscal-basic"/>
-	<classpathentry kind="lib" path="C:/Users/daniel.melo/.m2/repository/commons-io/commons-io/2.4/commons-io-2.4.jar">
-		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="javadoc_location" value="jar:file:/C:/Users/daniel.melo/.m2/repository/commons-io/commons-io/2.4/commons-io-2.4-javadoc.jar!/"/>
-			<attribute name="maven.groupId" value="commons-io"/>
-			<attribute name="maven.artifactId" value="commons-io"/>
-			<attribute name="maven.version" value="2.4"/>
-			<attribute name="maven.scope" value="compile"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="lib/lib.framwrk.jar"/>
+	<classpathentry kind="lib" path="lib/lib-basic.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
