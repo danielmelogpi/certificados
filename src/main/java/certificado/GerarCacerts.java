@@ -1,8 +1,10 @@
 package certificado;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.KeyStore;
@@ -23,9 +25,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
 
 public class GerarCacerts {
 
@@ -67,17 +66,16 @@ public class GerarCacerts {
 			in.close();
 			
 			File listaServidores = new File("src/main/resources/hosts/lista");
-			LineIterator it = FileUtils.lineIterator(listaServidores, "UTF-8");
-			try {
-			    while (it.hasNext()) {
-			    	String servidor = it.nextLine();
-			    	if (servidoresConectados.get(servidor)==null) {
-			    		get(servidor, 443, ks);
-			    	}
-			    }
-			} finally {
-			    it.close();
-			}
+			BufferedReader br = new BufferedReader(new FileReader(listaServidores));  
+			String servidor = br.readLine();
+			while (servidor != null)  
+			{  
+				if (servidoresConectados.get(servidor)==null) {
+		    		get(servidor, 443, ks);
+		    	}
+				servidor = br.readLine();
+			} 
+			br.close();
 			
 			try {
 				adicionarACBaixadas(ks);
@@ -129,7 +127,7 @@ public class GerarCacerts {
 			 * PKIX path building failed:
 			 * sun.security.provider.certpath.SunCertPathBuilderException:
 			 * unable to find valid certification path to requested target
-			 * Não tratado, pois sempre ocorre essa exceo quando o cacerts
+			 * Nï¿½o tratado, pois sempre ocorre essa exceo quando o cacerts
 			 * nao esta gerado.
 			 */
 		} catch (SSLException e) {
