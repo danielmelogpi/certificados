@@ -5,9 +5,9 @@ import java.net.URL;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.X509TrustManager;
-
-import org.springframework.xml.transform.StringResult;
-import org.springframework.xml.transform.StringSource;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 import util.Log;
 import br.com.pcsist.docfiscal.framework.https.HttpsClientBuilder;
@@ -17,17 +17,17 @@ import br.com.pcsist.docfiscal.framework.soap.XmlHttpsSender;
 public class StatusServicoSefaz {
 	
 	
-	public StringResult execute(String uri, String data,  KeyManager[] keyManagers, X509TrustManager trustManager) throws Exception {
+	public StreamResult execute(String uri, String data,  KeyManager[] keyManagers, X509TrustManager trustManager) throws Exception {
 		HttpsClientBuilder builder = new HttpsClientBuilder();
-		StringResult result = new StringResult();
+		StreamResult result = new StreamResult();
 		XmlHttpsSender sender = new XmlHttpsSender();
 		
 		CustomMassageCallback callback;
-		StringSource source;
+		Source source;
 		
 		try {
 			ConsStatServ consStat = new ConsStatServ();
-			source = new StringSource(consStat.toString());
+			source = new StreamSource(consStat.toString());
 			callback = new CustomMassageCallback(consStat.getHeader(), consStat.NFECONSULTA_SOAP_ACTION);
 			
 			builder.addTrustManager(trustManager).setKeyManager(keyManagers).setUrl(new URL(uri));

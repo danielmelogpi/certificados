@@ -10,7 +10,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.xml.transform.StringResult;
+import javax.xml.transform.stream.StreamResult;
 
 import util.Log;
 import certificado.OpenCert;
@@ -45,7 +45,7 @@ public class OlaSefaz {
 	
 	
 	
-	public StringResult consultaStatusSefaz(KeyManager[] keyManager, X509TrustManager trustManager) {
+	public StreamResult consultaStatusSefaz(KeyManager[] keyManager, X509TrustManager trustManager) {
 		StatusServicoSefaz sefaz = new StatusServicoSefaz();
 		ConsStatServ cons = new ConsStatServ();
 		try {
@@ -60,7 +60,7 @@ public class OlaSefaz {
 	
 	public boolean conversarSefaz(KeyManager[] keyManager, X509TrustManager trustManager) {
 			
-		StringResult resp = null;
+		StreamResult resp = null;
 		try {
 			resp = consultaStatusSefaz(keyManager, trustManager);
 		} catch (Exception e) {
@@ -68,7 +68,7 @@ public class OlaSefaz {
 		}
 		
 		if (resp != null) {
-			Log.out("Comunicação ok. :)  Sefaz disse:" + resp);
+			Log.out("Comunicaï¿½ï¿½o ok. :)  Sefaz disse:" + resp);
 			return true;
 		}
 		return false;
