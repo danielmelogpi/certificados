@@ -14,8 +14,8 @@ import javax.net.ssl.X509TrustManager;
 
 /* Classe copiada do <a href='http://goo.gl/oJc6ow'>link do site da ibm </a>,
  * verificar esse codigo apenas
- * adicionei uma referencia ao field chain e criei um método pra executar a
- * criação dos certificados
+ * adicionei uma referencia ao field chain e criei um mtodo pra executar a
+ * criao dos certificados
  * 
  * @author fabricio.csantos
  * 
@@ -29,8 +29,8 @@ public class MyX509TrustManager implements X509TrustManager {
 	private X509TrustManager pkixTrustManager;
 	private X509Certificate chain[];
 
-	// TODO: esse método está aqui para encapsular a necessidade de conhecer
-	// detalhes desse objeto, verificar o melhor lugar para esse método.
+	// TODO: esse mtodo est aqui para encapsular a necessidade de conhecer
+	// detalhes desse objeto, verificar o melhor lugar para esse mtodo.
 	public void generateCertificates(KeyStore ks, String alias) throws KeyStoreException, NoSuchAlgorithmException, CertificateEncodingException {
 		if (chain == null) {
 			throw new NullPointerException();

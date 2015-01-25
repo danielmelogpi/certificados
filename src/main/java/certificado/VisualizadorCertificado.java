@@ -26,7 +26,7 @@ public class VisualizadorCertificado {
 			try {
 				ks.load(entrada, senhaDoCertificadoDoCliente.toCharArray());
 			} catch (IOException e) {
-				throw new Exception("Senha do Certificado Digital incorreta ou Certificado inválido.");
+				throw new Exception("Senha do Certificado Digital incorreta ou Certificado invlido.");
 			}
 			
 			Provider pp = ks.getProvider();

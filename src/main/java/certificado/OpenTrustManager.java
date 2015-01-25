@@ -27,7 +27,7 @@ public class OpenTrustManager {
 			in.close();
 			return ks;
 		} catch (Exception e) {
-			Log.out("Não foi possível carregar TrustStore (cacerts).", e);
+			Log.out("No foi possvel carregar TrustStore (cacerts).", e);
 			throw new RuntimeException(e);
 		}
 	}
@@ -42,7 +42,7 @@ public class OpenTrustManager {
 			in.close();
 			return ks;
 		} catch (Exception e) {
-			Log.out("Não foi possível carregar TrustStore (cacerts).", e);
+			Log.out("No foi possvel carregar TrustStore (cacerts).", e);
 			throw new RuntimeException(e);
 		}
 	}
