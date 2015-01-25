@@ -1,4 +1,4 @@
-package certificado;
+package cacerts.generator;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +25,8 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+
+import cacerts.generator.trustmanager.SavingTrustManager;
 
 public class GerarCacerts {
 
@@ -116,7 +118,6 @@ public class GerarCacerts {
 			return;
 		}
 		
-		
 		try {
 			info("| Starting SSL handshake...");
 			socket.startHandshake();
@@ -127,7 +128,7 @@ public class GerarCacerts {
 			 * PKIX path building failed:
 			 * sun.security.provider.certpath.SunCertPathBuilderException:
 			 * unable to find valid certification path to requested target
-			 * N�o tratado, pois sempre ocorre essa exceo quando o cacerts
+			 * No tratado, pois sempre ocorre essa exceo quando o cacerts
 			 * nao esta gerado.
 			 */
 		} catch (SSLException e) {
@@ -171,35 +172,6 @@ public class GerarCacerts {
 		  }
 		
 	}
-
-	private static class SavingTrustManager implements X509TrustManager {
-		private final X509TrustManager tm;
-		private X509Certificate[] chain;
-
-		SavingTrustManager(X509TrustManager tm) {
-			this.tm = tm;
-		}
-
-		@Override
-		public X509Certificate[] getAcceptedIssuers() {
-			return new X509Certificate[0];
-			// throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void checkClientTrusted(X509Certificate[] chain, String authType)
-				throws CertificateException {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void checkServerTrusted(X509Certificate[] chain, String authType)
-				throws CertificateException {
-			this.chain = chain;
-			this.tm.checkServerTrusted(chain, authType);
-		}
-	}
-
 
 	private static void info(String log) {
 		System.out.println("INFO: " + log);
