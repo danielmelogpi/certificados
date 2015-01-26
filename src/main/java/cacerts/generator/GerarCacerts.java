@@ -1,21 +1,23 @@
 package cacerts.generator;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -26,6 +28,10 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import org.apache.commons.io.FileUtils;
+
+import util.Log;
+import webservices.ExtrairWebservices;
 import cacerts.generator.trustmanager.SavingTrustManager;
 
 public class GerarCacerts {
@@ -35,67 +41,83 @@ public class GerarCacerts {
 	 * Baseado em http://www.javac.com.br/jc/posts/list/34.page
 	 */	
 
-	private static final String CACERTS_NAME = "ExperimentoCacerts";
+	private static final String CACERTS_NAME = "cacerts-experimento";
 	private static final String CACERTS_PATH =  "src/main/resources/certificados/keystore";
 	private static final char SEPARATOR = File.separatorChar;
-	private static final int TIMEOUT_WS = 30;
-	private static HashMap<String, Boolean> servidoresConectados = new HashMap<>();
+	private static final int TIMEOUT_WS = 15 * 1000;
+	private static Set<String> servidoresConectados = new HashSet<>();
+	private static CertificateFactory certFactory;
+	private static MessageDigest md5;
+	private static MessageDigest sha1;
+	private static KeyStore keystore;
 
+
+	private static void initAlgorithms() throws CertificateException,
+			NoSuchAlgorithmException {
+		certFactory  = CertificateFactory.getInstance("X509");
+		sha1 = MessageDigest.getInstance("SHA1");
+		md5 = MessageDigest.getInstance("MD5");
+	}
 
 	public static void main(String[] args) {	
 		try {
-
+			initAlgorithms();
+			
 			char[] passphrase = "changeit".toCharArray();
 			File file = new File(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
 
-			if (file.isFile()) {
-				file.delete();
-			}
-
-			if (file.isFile() == false) {
-
-				File dir = new File(System.getProperty("java.home") + SEPARATOR + "lib" + SEPARATOR + "security");
-				file = new File(dir, CACERTS_NAME);
-				if (file.isFile() == false) {
-					file = new File(dir, "cacerts");
-				}
-			}
-
-			info("| Loading KeyStore " + file + "...");
-			InputStream in = new FileInputStream(file);
-			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-			ks.load(in, passphrase);
-			in.close();
+			loadKeystore(passphrase, file);
 			
-			File listaServidores = new File("src/main/resources/hosts/lista");
-			BufferedReader br = new BufferedReader(new FileReader(listaServidores));  
-			String servidor = br.readLine();
-			while (servidor != null)  
-			{  
-				if (servidoresConectados.get(servidor)==null) {
-		    		get(servidor, 443, ks);
+			ExtrairWebservices.init();
+			Set<String> webservices = ExtrairWebservices.getExtractedHosts();
+			
+			Iterator<String> wsIterator = webservices.iterator();
+			while(wsIterator.hasNext()) {
+				String server = wsIterator.next();
+				if (!servidoresConectados.contains(server)) {
+					try {
+						get(server, 443, keystore);
+						servidoresConectados.add(server);
+					}catch (Exception e) {
+						Log.error("Erro ao buscar certificados de " + server + e.getMessage());
+					}
 		    	}
-				servidor = br.readLine();
-			} 
-			br.close();
+			}
 			
 			try {
-				adicionarACBaixadas(ks);
+				addOfflineCertificates(keystore);
 			} catch (Exception e) {
-				error(e.getLocalizedMessage());
+				Log.error("Erro ao salvar certificados offline na keystore. " + e.getLocalizedMessage());
 			}
-			
 
 			System.out.println(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
 			File cafile = new File(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
 			OutputStream out = new FileOutputStream(cafile);
-			ks.store(out, passphrase);
+			keystore.store(out, passphrase);
 			out.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.error("Erro ao gerar repositorio de ACs " + e.getMessage());
 		}
 	}
 
+	private static void loadKeystore(char[] passphrase, File file)
+			throws FileNotFoundException, KeyStoreException, IOException,
+			NoSuchAlgorithmException, CertificateException {
+		
+		Log.info("Carregando keystore em memória ...");
+		InputStream in = new FileInputStream(file);
+		keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+		keystore.load(null, passphrase);
+		in.close();
+	}
+
+	/** Inicia uma conexão com o host indicado e introduz na keystore
+	 * os certificados enviados pelo servidor remoto.
+	 * @param host String Servidor remoto
+	 * @param port int	Porta para conexão (443 para tls)
+	 * @param ks KeyStore Repositorio de chaves a receber os certificados
+	 * @throws Exception
+	 */
 	public static void get(String host, int port, KeyStore ks) throws Exception {
 		SSLContext context = SSLContext.getInstance("TLS");
 		TrustManagerFactory tmf = TrustManagerFactory.getInstance(
@@ -106,42 +128,34 @@ public class GerarCacerts {
 		context.init(null, new TrustManager[]{tm}, null);
 		SSLSocketFactory factory = context.getSocketFactory();
 
-		info("| Opening connection to " + host + ":" + port + "...");
+		Log.info(" - Abrindo conexão com " + host + ":" + port + "...");
 		
 		SSLSocket socket = null;
 		try{
 			socket = (SSLSocket) factory.createSocket(host, port);
-			socket.setSoTimeout(TIMEOUT_WS * 1000);
+			socket.setSoTimeout(TIMEOUT_WS);
 		}
 		catch(Exception e) {
-			error("Erro ao acessar "+ host);
+			Log.error(" - Erro ao acessar "+ host);
 			return;
 		}
 		
 		try {
-			info("| Starting SSL handshake...");
+			Log.info(" - Starting SSL handshake...");
 			socket.startHandshake();
 			socket.close();
-			info("| No errors, certificate is already trusted");
+			Log.info(" - Sem erros. Certificate já tem confiança.");
 		} catch (SSLHandshakeException e) {
-			/**
-			 * PKIX path building failed:
-			 * sun.security.provider.certpath.SunCertPathBuilderException:
-			 * unable to find valid certification path to requested target
-			 * No tratado, pois sempre ocorre essa exceo quando o cacerts
-			 * nao esta gerado.
-			 */
 		} catch (SSLException e) {
-			error("| " + e.toString());
+			Log.error("" + e.toString());
 		}
 
-		X509Certificate[] chain = tm.chain;
+		X509Certificate[] chain = tm.getChain();
 		if (chain == null) {
-			info("| Could not obtain server certificate chain");
+			Log.error(" - Não foi possivel obter a cadeia do certificado");
 		} else {
-			info("| Server sent " + chain.length + " certificate(s):");
-			MessageDigest sha1 = MessageDigest.getInstance("SHA1");
-			MessageDigest md5 = MessageDigest.getInstance("MD5");
+			Log.info(" - O servidor enviou " + chain.length + " certificado(s):");
+			
 			for (int i = 0; i < chain.length; i++) {
 				X509Certificate cert = chain[i];
 				sha1.update(cert.getEncoded());
@@ -149,36 +163,31 @@ public class GerarCacerts {
 
 				String alias = host + "-" + (i);
 				ks.setCertificateEntry(alias, cert);
-				info("| Added certificate to keystore '" + CACERTS_PATH + SEPARATOR + CACERTS_NAME + "' using alias '" + alias + "'");
+				Log.info(" - Adicionado certificado ao keystore usando o alias '" + alias + "'");
 			}
 		}
 	}
 	
-	private static void adicionarACBaixadas(KeyStore ks) throws CertificateException, FileNotFoundException, KeyStoreException {
+	/** Adiciona certificados baixados */
+	private static void addOfflineCertificates(KeyStore ks) throws CertificateException, FileNotFoundException, KeyStoreException {
 		File dir = new File("src/main/resources/certificado/autoridades");
-		info ("adicionando autoridades baixadas");
-		File[] directoryListing = dir.listFiles();
-		  if (directoryListing != null) {
-		    for (File child : directoryListing) {
-		    	Collection  col_crt1 =CertificateFactory.getInstance("X509").generateCertificates(new FileInputStream(child));
-		    	Certificate crt1 = (Certificate) col_crt1.iterator().next();
-		    	Certificate[] chain = new Certificate[] { crt1 };
-		    	String alias1 = ((X509Certificate) crt1).getSubjectX500Principal().getName();
-		    	info("Adicionando alias " + alias1);
-		    	ks.setCertificateEntry(alias1, crt1);
+		Log.info("Adicionando autoridades offline");
+		File[] offileCertDir = dir.listFiles();
+		  if (offileCertDir != null) {
+		    for (File certFile : offileCertDir) {
+		    	
+				FileInputStream crtInputStream = new FileInputStream(certFile);
+				Collection<? extends Certificate>  crtColletion = certFactory.generateCertificates(crtInputStream);
+		    	Certificate cert = (Certificate) crtColletion.iterator().next();
+		    	sha1.update(cert.getEncoded());
+				md5.update(cert.getEncoded());
+		    	String alias = ((X509Certificate) cert).getSubjectX500Principal().getName();
+		    	Log.info("Adicionando alias " + alias);
+		    	ks.setCertificateEntry(alias, cert);
 		    }
 		  } else {
-		    error("erro ao iniciar instalacao de autoridades baixadas");
+		    Log.error("Erro ao iniciar instalacao de autoridades offline");
 		  }
-		
-	}
-
-	private static void info(String log) {
-		System.out.println("INFO: " + log);
-	}
-
-	private static void error(String log) {
-		System.out.println("ERROR: " + log);
 	}
 
 }

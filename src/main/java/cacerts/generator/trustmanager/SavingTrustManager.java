@@ -9,6 +9,10 @@ public class SavingTrustManager implements X509TrustManager {
 	private final X509TrustManager tm;
 	public X509Certificate[] chain;
 
+	public X509Certificate[] getChain() {
+		return this.chain;
+	}
+
 	public SavingTrustManager(X509TrustManager tm) {
 		this.tm = tm;
 	}

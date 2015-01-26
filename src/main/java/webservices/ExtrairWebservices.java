@@ -37,7 +37,8 @@ public class ExtrairWebservices {
 		extractWebservices();
 	}
 	
-	/** Retorna os webservices extraidos das paginas indicadas na configuração */
+	/** Retorna os webservices extraidos das paginas indicadas 
+	 * na configuração */
 	public static Set<String> getExtractedHosts() {
 		return extractedHosts;
 	}
@@ -58,7 +59,7 @@ public class ExtrairWebservices {
 				String siteContent = IOUtils.toString(response);
 				Set<String> hosts = extractHosts(siteContent);
 				extractedHosts.addAll(hosts);
-				Log.error("Hosts encontrados : ", hosts);
+				Log.info("Hosts encontrados : ", hosts);
 			}
 		} catch (Exception e) {
 			Log.error(e);
@@ -72,7 +73,7 @@ public class ExtrairWebservices {
 		
 		Set<String> results = new HashSet<String>();
 		while(matcher.find()) {
-			results.add(matcher.group());
+			results.add(matcher.group().replace("http://", "").replace("https://", ""));
 		}
 		return results;
 		
