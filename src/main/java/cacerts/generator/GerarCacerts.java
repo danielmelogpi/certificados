@@ -29,6 +29,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import util.Log;
 import webservices.ExtrairWebservices;
@@ -64,7 +65,8 @@ public class GerarCacerts {
 			initAlgorithms();
 			
 			char[] passphrase = "changeit".toCharArray();
-			File file = new File(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
+			String outputCacertsFile = CACERTS_PATH + SEPARATOR + CACERTS_NAME;
+			File file = new File(outputCacertsFile);
 
 			loadKeystore(passphrase, file);
 			
@@ -90,11 +92,11 @@ public class GerarCacerts {
 				Log.error("Erro ao salvar certificados offline na keystore. " + e.getLocalizedMessage());
 			}
 
-			System.out.println(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
-			File cafile = new File(CACERTS_PATH + SEPARATOR + CACERTS_NAME);
+			File cafile = new File(outputCacertsFile);
 			OutputStream out = new FileOutputStream(cafile);
 			keystore.store(out, passphrase);
 			out.close();
+			Log.info("Gerado arquivo em " + outputCacertsFile);
 		} catch (Exception e) {
 			Log.error("Erro ao gerar repositorio de ACs " + e.getMessage());
 		}
@@ -104,10 +106,16 @@ public class GerarCacerts {
 			throws FileNotFoundException, KeyStoreException, IOException,
 			NoSuchAlgorithmException, CertificateException {
 		
+		if (!file.exists()){
+			Log.info("O arquivo indicado para criação não existe. Utilizando cacerts padrão do Java como base");
+			file =  new File(System.getProperty("java.home") + SEPARATOR + "lib" + SEPARATOR + "security" + SEPARATOR + "cacerts");
+		}
+		
+		
 		Log.info("Carregando keystore em memória ...");
 		InputStream in = new FileInputStream(file);
 		keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-		keystore.load(null, passphrase);
+		keystore.load(new FileInputStream(file), passphrase);
 		in.close();
 	}
 
@@ -128,7 +136,7 @@ public class GerarCacerts {
 		context.init(null, new TrustManager[]{tm}, null);
 		SSLSocketFactory factory = context.getSocketFactory();
 
-		Log.info(" - Abrindo conexão com " + host + ":" + port + "...");
+		Log.info("Abrindo conexão com " + host + ":" + port + "...");
 		
 		SSLSocket socket = null;
 		try{
@@ -138,16 +146,17 @@ public class GerarCacerts {
 		catch(Exception e) {
 			Log.error(" - Erro ao acessar "+ host);
 			return;
-		}
+		} 
 		
 		try {
 			Log.info(" - Starting SSL handshake...");
 			socket.startHandshake();
-			socket.close();
 			Log.info(" - Sem erros. Certificate já tem confiança.");
 		} catch (SSLHandshakeException e) {
 		} catch (SSLException e) {
 			Log.error("" + e.toString());
+		} finally{
+			socket.close();
 		}
 
 		X509Certificate[] chain = tm.getChain();
@@ -181,7 +190,7 @@ public class GerarCacerts {
 		    	Certificate cert = (Certificate) crtColletion.iterator().next();
 		    	sha1.update(cert.getEncoded());
 				md5.update(cert.getEncoded());
-		    	String alias = ((X509Certificate) cert).getSubjectX500Principal().getName();
+		    	String alias = certFile.getName();
 		    	Log.info("Adicionando alias " + alias);
 		    	ks.setCertificateEntry(alias, cert);
 		    }

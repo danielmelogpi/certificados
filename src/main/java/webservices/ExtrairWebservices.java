@@ -47,6 +47,9 @@ public class ExtrairWebservices {
 	private static void fillSourceSite() {
 		sourceSites.add("http://hom.nfe.fazenda.gov.br/portal/WebServices.aspx");
 		sourceSites.add("http://www.nfe.fazenda.gov.br/portal/WebServices.aspx");
+		sourceSites.add("http://www.cte.fazenda.gov.br/webservices.aspx");
+		sourceSites.add("http://hom.cte.fazenda.gov.br/webservices.aspx");
+		sourceSites.add("https://mdfe-portal.sefaz.rs.gov.br/Site/Servicos");
 	}
 
 	private static void extractWebservices() {
@@ -68,7 +71,7 @@ public class ExtrairWebservices {
 	
 	private static Set<String> extractHosts(String rawContent) {
 		/** TODO configurar via YAML */ 
-		String hostRegex = "https:\\/\\/[a-zA-Z]([A-Z\\.\\/a-z])*\\.gov.br";
+		String hostRegex = "https:\\/\\/[a-zA-Z]([\\w\\.\\-])*\\.gov.br";
 		Matcher matcher = Pattern.compile(hostRegex).matcher(rawContent);
 		
 		Set<String> results = new HashSet<String>();
