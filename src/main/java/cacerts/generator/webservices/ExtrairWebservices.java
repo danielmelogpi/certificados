@@ -1,4 +1,4 @@
-package webservices;
+package cacerts.generator.webservices;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;

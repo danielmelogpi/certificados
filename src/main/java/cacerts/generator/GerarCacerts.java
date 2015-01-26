@@ -32,8 +32,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import util.Log;
-import webservices.ExtrairWebservices;
 import cacerts.generator.trustmanager.SavingTrustManager;
+import cacerts.generator.webservices.ExtrairWebservices;
 
 public class GerarCacerts {
 
